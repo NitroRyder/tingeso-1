@@ -50,4 +50,5 @@ public class CreditoEntity {
     @ManyToOne
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
     private UsuarioEntity usuario; // USUARIO ASOCIADO AL CRÉDITO
+    //-----------------------------------------------------------------------------------------//
 }

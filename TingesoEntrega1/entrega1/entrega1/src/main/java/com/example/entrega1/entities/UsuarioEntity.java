@@ -30,6 +30,9 @@ public class UsuarioEntity {
     @Column(name = "age", nullable = false)
     private int age = 0;   // VALOR DE EDAD
     //-----------------------------------------------------------------------------------------//
+    @Column(name = "workage", nullable = false)
+    private int workage = 0;   // VALOR DE AÑOS DE TRABAJO
+    //-----------------------------------------------------------------------------------------//
     @ElementCollection
     @CollectionTable(name = "usuario_documents", joinColumns = @JoinColumn(name = "usuario_id"))
     @Column(name = "documents")
@@ -44,10 +47,27 @@ public class UsuarioEntity {
     @Column(name = "objective", nullable = true)
     private String objective; // VALOR DE OBJETIVO -> ES TEXTO
     //-----------------------------------------------------------------------------------------//
+    // LISTA DE AHORROS (HISTORIAL)
+    @JsonManagedReference
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario", orphanRemoval = true)
+    private List<AhorrosEntity> ahorros = new ArrayList<>(); // LISTA DE AHORROS -> HISTORIAL DE AHORROS
+    //-----------------------------------------------------------------------------------------//
+    // UN CLIENTE TIENE UNA SOLICITUD DE CRÉDITO
+    @JsonManagedReference
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "solicitud_id", referencedColumnName = "id")
+    private CreditoEntity solicitud; // SOLICITUD DE CRÉDITO
+    //-----------------------------------------------------------------------------------------//
     // UN CLIENTE TIENE UNA LISTA DE CREDITOS (HISTORIAL)
     @JsonManagedReference
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "usuario", orphanRemoval = true)
     private List<CreditoEntity> creditos = new ArrayList<>(); // LISTA DE CRÉDITOS -> HISTORIAL DE CREDITOS
+
+    // LISTA DE NOTIFICACIONES
+    @ElementCollection
+    @CollectionTable(name = "usuario_notifications", joinColumns = @JoinColumn(name = "usuario_id"))
+    @Column(name = "notifications")
+    private List<String> notifications = new ArrayList<>();  // List of notifications -> // VALOR DE NOTIFICACIONES ----> ES UNA LISTA DE NOTIFICACIONES
     //-----------------------------------------------------------------------------------------//
     // -------------------------[CONDICIONES DE LIMITACIONES]-------------------------// -> OPCIÓN POR CREACIÓN POR POSTMAN
     //-----------------------------------------------------------------------------------------//
@@ -67,6 +87,14 @@ public class UsuarioEntity {
         this.name = name;
     }
     //-----------------------------------------------------------------------------------------//
+    // LIMITACIÓN DE VALOR; SOLO SE ACEPTAN MAYOR O IGUAL A 0
+    public void setWorkage(int workage) {
+        if (workage < 0) {
+            throw new IllegalArgumentException("EL VALOR DE AÑOS DE TRABAJO TIENE QUE SER MAYOR O IGUAL QUE: 0");
+        }
+        this.workage = workage;
+    }
+    //-----------------------------------------------------------------------------------------//
     // LIMITACIÓN DE VALOR; SOLO SE ACEPTAN MAYOR O IGUAL A 18
     public void setAge(int age) {
         if (age <= 18) {
@@ -79,8 +107,11 @@ public class UsuarioEntity {
     public void setDocuments(List<String> documents) {
         if (documents != null) {
             for (String document : documents) {
-                if (document == null || !document.toLowerCase().endsWith(".pdf")) {
-                    throw new IllegalArgumentException("TODOS LOS DOCUMENTOS DEBEN SER ARCHIVOS PDF Y NO NULOS");
+                if (document == null) {
+                    throw new IllegalArgumentException("NO SE HA INGRESADO UN ARCHIVO POR FAVOR INGRESAR DOCUMENTO DE TIPO pdf");
+                }
+                if (!document.toLowerCase().endsWith(".pdf")) {
+                    throw new IllegalArgumentException("EL DOCUMENTO NO ES DEL TIPO PDF. POR FAVOR INGRESAR UN DOCUMENTO DE TIPO PDF");
                 }
             }
         }
@@ -102,6 +133,10 @@ public class UsuarioEntity {
         }
         this.ingresos = nIngresos;
     }
+    //-----------------------------------------------------------------------------------------//
+    public void setSolicitud() {
+        this.solicitud = new CreditoEntity();
+    }
     // -------------------------------[GETTERS-SELECTIVOS]------------------------------//
     //-----------------------------------------------------------------------------------------//
     // OBTENER VALOR DE RUT
@@ -113,9 +148,11 @@ public class UsuarioEntity {
     }
     //-----------------------------------------------------------------------------------------//
     // OBTENER VALOR DE EDAD
-    public int getAge() {
-        return age;
+    public int getAge() {return age;
     }
+    //-----------------------------------------------------------------------------------------//
+    // OBTENER VALOR DE AÑOS DE TRABAJO
+    public int getWorkage() {return workage;}
     //-----------------------------------------------------------------------------------------//
     // OBTENER VALOR DE DOCUMENTOS
     public List<String> getDocuments() {return documents;
